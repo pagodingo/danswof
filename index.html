@@ -1,0 +1,2124 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>darch's dev shop</title>
+</head>
+
+<body>
+
+  <style>
+    .image-item .drag-bar {
+      position: absolute;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 60px;
+      height: 10px;
+      background: #888;
+      border-radius: 4px 4px 0 0;
+      cursor: grab;
+      z-index: 10;
+    }
+
+    .link-chip {
+      display: inline-flex;
+      align-items: center;
+      flex-direction: column;
+      /* ← add this */
+      /* gap: 5px; */
+      margin: 5px;
+      border: 1px solid #666666;
+      color: #666666;
+      background: #252525;
+      border-radius: 3px;
+      padding: 1px 6px;
+
+      text-decoration: none;
+      font-size: 13px;
+      cursor: pointer;
+      white-space: normal;
+      word-break: break-word;
+      user-select: none;
+      -webkit-user-select: none;
+      max-height: 108px !important;
+      overflow-y: scroll;
+      /* make the whole chip a single atomic unit */
+    }
+
+    .link-chip:hover {
+      border: 1px solid #f47b85;
+    }
+
+    .link-chip::before {
+      content: '∅ - Qualia, or the Fourth World';
+      position: sticky;
+      background: #252525;
+      top: 0;
+      width: 100%;
+      color: #f47b85;
+      border-bottom: 1px solid #666;
+    }
+
+    .handle {
+      position: absolute;
+      width: 10px;
+      height: 10px;
+      /* border: 1px solid #555; */
+      border-radius: 2px;
+    }
+
+    .handle.nw {
+      top: -6px;
+      left: -6px;
+      cursor: nwse-resize;
+    }
+
+    .handle.ne {
+      top: -6px;
+      right: -6px;
+      cursor: nesw-resize;
+    }
+
+    .handle.sw {
+      bottom: -6px;
+      left: -6px;
+      cursor: nesw-resize;
+    }
+
+    .handle.se {
+      bottom: -6px;
+      right: -6px;
+      cursor: nwse-resize;
+    }
+
+    #canvas {
+      /* position: relative; */
+      /* height: calc(100% - 48px); */
+      /* background: linear-gradient(90deg, #111 0 1px, transparent 1px) 0 0/20px 120px,
+                linear-gradient(#111 0 1px, transparent 1px) 0 0/60px 20px; */
+      overflow: auto;
+      /* background: #000; */
+      /* height: 100vw; */
+      /* background-color: #333; */
+      position: relative;
+      margin-bottom: auto;
+      overflow-y: scroll !important;
+      bottom: 0;
+      height: 100%;
+      width: 100%;
+    }
+
+    /* 
+    #canvas:hover {
+      background: #222;
+      cursor: pointer;
+    } */
+
+    .image-item {
+      position: absolute;
+      touch-action: none;
+      /* allow pointer dragging */
+      user-select: none;
+      /* max-width: 800px;
+      max-height: 800px; */
+      cursor: grab;
+      /* border: 1px dashed rgba(0, 0, 0, 0.12); */
+      /* background: rgba(255, 255, 255, 0.6); */
+      /* box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08); */
+      border-radius: 4px;
+    }
+
+
+
+    .image-item:hover {
+      border: 1px dashed #555;
+    }
+
+    .image-item:hover .handle {
+      background: #999;
+    }
+
+    .image-item img {
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      border-radius: 4px;
+    }
+
+    .text-item {
+      position: absolute;
+      touch-action: none;
+      user-select: text;
+      min-width: 100px;
+      min-height: 40px;
+      padding: 6px 8px;
+      background: #000;
+      border: 1px dashed rgba(0, 0, 0, 0.2);
+      border-radius: 4px;
+      cursor: grab;
+      font-size: 16px;
+      line-height: 1.4;
+      white-space: pre-wrap;
+      overflow: auto;
+      resize: both;
+      color: #fff;
+    }
+
+    .text-item:focus {
+      outline: 2px solid #333;
+    }
+
+    html,
+    body {
+      margin: 0;
+      height: 100%;
+      color: #fffff6;
+      overflow: hidden;
+      /* prevent accidental scroll */
+      font-size: 12px;
+      font-family: 'monospace';
+      /* background-color: #0078ce; */
+      /* cursor: pointer; */
+    }
+
+    .container {
+      position: absolute;
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      width: 100%;
+      bottom: 0;
+    }
+
+    .editor {
+      margin-bottom: auto;
+      top: 0;
+    }
+
+    .map-item {
+      aspect-ratio: 1 / 1;
+      width: auto;
+      height: auto;
+      text-align: center;
+      vertical-align: middle;
+      background-repeat: no-repeat;
+      background-position: center;
+      background-size: contain;
+      padding: 10px;
+    }
+
+    .playground {
+      overflow-y: scroll;
+      height: 100%;
+      bottom: 0;
+      display: flex;
+    }
+
+    #text-box {
+      overflow-y: scroll;
+      width: 100%;
+      bottom: 40px;
+      height: 200px;
+      min-height: 200px;
+      background-color: #222;
+    }
+
+    /* #grid {
+      overflow-y: scroll;
+      background: transparent;
+      bottom: 0 !important;
+      margin-top: auto;
+      border-right: 1px solid #242424;
+      z-index: -1
+    } */
+
+
+    #grd {
+      overflow-y: scroll;
+      height: 100%;
+      width: 100%;
+      border: 1px solid #555;
+      resize: both;
+    }
+
+
+    #grid {
+      overflow-y: scroll;
+      background: #333;
+      /* background: url('https://opengameart.org/sites/default/files/bg_sky2.png'); */
+      /* background: url('./clouds.png'); */
+      bottom: 0 !important;
+      margin-top: auto;
+      /* position: relative; */
+      border-right: 1px solid #242424;
+      /* border-top: 3px solid #222;  */
+    }
+
+    .main {
+      display: flex;
+      flex-direction: row;
+      height: 100%;
+      width: 100%;
+      overflow: hidden;
+      overflow-x: scroll;
+    }
+
+    .left {
+      /* flex: 0 0 1120px; */
+      max-width: fit-content;
+      overflow: auto;
+    }
+
+    .divider {
+      width: 6px;
+      cursor: col-resize;
+      /* border-left: 1px solid #444 */
+    }
+
+    * {
+      scrollbar-color: #888 #F0F0F0;
+    }
+
+    .results {
+      color: #fff;
+      width: 100%;
+      overflow-y: scroll;
+      /* max-height: 200px; */
+      background: none;
+    }
+
+    #terminal {
+      position: absolute;
+      top: calc(50% - 250px);
+      left: calc(50% - 250px);
+      overflow-x: hidden;
+      height: 500px;
+      border: 1px solid #555;
+      display: flex;
+      background: #2222229e;
+      border-radius: 5px;
+      z-index: 88;
+      max-width: 500px;
+    }
+
+    #terminal-tabs {
+      max-width: 500px !important;
+      overflow-x: scroll;
+    }
+
+    #fileSearchBarInput,
+    #fileSearchBar {
+      border: none;
+      display: none;
+      outline: none;
+      width: 500px;
+      margin: 0;
+      color: #fff;
+      background: none;
+      /* position: absolute; */
+      padding: 5px;
+    }
+
+    #fileSearchBar {
+      /* border-top: 1px solid #333; */
+      /* background-color: none; */
+      padding: 0;
+      width: 500px;
+      height: 500px;
+      /* set file search bar above all other elements */
+    }
+
+    #fileSearchBarInput:focus {
+      display: block !important;
+    }
+
+    .results div {
+      cursor: pointer;
+
+      padding: 5px;
+    }
+
+    .results div:hover,
+    .result-selected {
+      background-color: #444;
+    }
+
+    .app {
+      height: 100%;
+      width: 100%;
+      overflow-y: scroll;
+      overflow-x: scroll;
+      padding: 10px;
+      /* border-left: .5px solid #555; */
+      /* white-space: nowrap; */
+    }
+
+    .app:active,
+    .app:hover,
+    .app:focus {
+      outline: none;
+      /* background: #222; */
+      /* border: 1px solid #444; */
+    }
+
+    a {
+      color: #999eee
+    }
+
+    #textarea {
+      box-sizing: border-box;
+      border-radius: 0.5rem;
+      padding: 0.5rem;
+      width: 100%;
+      color: #fff;
+    }
+
+    .canvas {
+      position: relative;
+      width: 2000px !important;
+      height: 2000px !important;
+      background: #1f386e;
+      background-image:
+        linear-gradient(to right, #1d8bdc 1px, transparent 1px),
+        linear-gradient(to bottom, #1d8bdc 1px, transparent 1px);
+      background-size: 32px 32px;
+    }
+
+    /* #1685d8 */
+
+    .image-box {
+      position: absolute;
+      cursor: move;
+      user-select: none;
+      border: 1px solid transparent;
+    }
+
+    .image-box.selected {
+      border: 1px dashed #4f46e5;
+    }
+
+    .image-box img {
+      display: block;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+
+    .resize-handle {
+      position: absolute;
+      width: 10px;
+      height: 10px;
+      background: #4f46e5;
+      right: -5px;
+      bottom: -5px;
+      cursor: nwse-resize;
+    }
+
+    #terminal-text {
+      width: 100%;
+      padding: 5px;
+    }
+
+    .t-btns {
+      display: flex;
+      flex-direction: row;
+      justify-content: space-evenly;
+      overflow-x: scroll;
+      scrollbar-width: none;
+    }
+
+    .t-btn {
+      background: #333;
+      width: 100%;
+      text-align: center;
+      min-width: 100px;
+    }
+
+    .t-btn:hover {
+      background: #555;
+      cursor: pointer;
+    }
+  </style>
+  <div class="container">
+    <div class="playground">
+      <div class="main">
+        <div class="left">
+          <div id="canvas" class="canvas"></div>
+        </div>
+        <!-- <div class="divider"></div>
+        <div class="app" contenteditable="true"></div> -->
+      </div>
+    </div>
+    <div>
+      <div id="terminal" style="display: none">
+        <div class="t-btns">
+          <div class="t-btn">{}</div>
+          <div class="t-btn">Save</div>
+          <div class="t-btn">History</div>
+          <div class="t-btn">Close</div>
+        </div>
+        <div id="fileSearchBar">
+          <input style="display: none" onkeyup="window.wof.main(event)" id="fileSearchBarInput" autocomplete="off"
+            spellcheck="false"> </input>
+        </div>
+        <div id="terminal-text"></div>
+      </div>
+    </div>
+  </div>
+  </div>
+
+</body>
+
+<script>
+
+  /*  ____
+   __[____]__                      _/\_
+    /^----^\                        \/ _/\_
+   ( .    . )             0000  _/\_    \/
+       <>                000     \/                            
+                         000   
+  000  000  000  .d00b.0000000
+  000  000  000 d00""00b 000    
+  000  000  000 000  000 000 
+  000..000..000 000..000 000        ____
+    "0000000"    "0000"  000     __[____]__
+                                  /^""""^\
+                                 ( 0/  0  )  
+                                   <>  
+  */
+
+
+  /** darch's notes ######
+   * WOF 
+   * each function is a feature / code base. 
+   * */
+
+  const state = {
+    theme:
+    {
+      colorText: window.localStorage.getItem('colorText') || '#fdfeff',
+      colorPrimary: window.localStorage.getItem('colorPrimary') || '#fdfeff',
+      colorSecondary: window.localStorage.getItem('colorSecondary') || '#444444',
+      colorContent: window.localStorage.getItem('colorContent') || '#222222',
+      colorEmphasis: window.localStorage.getItem('colorEmphasis') || '#222222',
+      colorAccent: window.localStorage.getItem('colorAccent') || 'lightgrey',
+      colorRowHover: window.localStorage.getItem('colorRowHover') || '#7baaff'
+    }
+  }
+
+
+  function render() {
+    window.wof = new Wof();
+    window.wof['mount']()
+    // window.wof['display-ne-canvas-w-img']();
+    window.wof['img-board']();
+    // window.wof['create-pin']()
+    // window.wof['chip']();
+  }
+
+  class Wof {
+
+    ['s-cache']() {
+      window.localStorage.setItem('cache',
+        JSON.stringify({
+          canvas: document.querySelector('#canvas').innerHTML,
+          app: document.querySelector('.app').innerHTML
+        }))
+    }
+
+    ['c-cache']() {
+      var cache = JSON.parse(window.localStorage.getItem('cache'))
+      console.log(cache)
+    }
+
+    ['l-cache']() {
+      var cache = JSON.parse(window.localStorage.getItem('cache'))
+      document.querySelector('.app').innerHTML = cache.app
+      document.querySelector('#canvas').innerHTML = cache.canvas
+    }
+
+    // NEW QUEZT:
+    // unlock new quests by stabilizing sun oattrs 
+
+    ['zroid-azur']() {
+      // androgenous search runtime.
+      // 
+      document.getElementById('terminal-text').innerText =
+        `search: 
+       file: 'peter-starkk.mp4'
+       date: 1-12-24, 8-20-25`
+    }
+
+
+
+    ['display-ne-canvas-w-img']() {
+
+      // <textarea style="width: 100%; display: inline-block; border: 1px solid #222; margin: 0px" class="text">
+
+
+      // change me to change grid height and width
+      const canvas = document.getElementById('grid');
+      canvas.width = 2048
+      canvas.height = 2048
+      const ctx = canvas.getContext('2d');
+
+
+      const cellSize = 16;
+      const rows = canvas.height / cellSize;
+      const cols = canvas.width / cellSize;
+
+      const imageSources = [
+        // './dan.jpeg',
+        // './cur.jpeg',
+        // './poi.jpeg',
+        // './dan2.jpeg'
+      ];
+
+      const images = [];
+      let imagesLoaded = 0;
+      let hoverTile = null;
+      let offsetX = 0;
+      let offsetY = 0;
+      let isDragging = false;
+      let lastX, lastY;
+
+      // store which image is drawn in each tile
+      const gridData = Array.from({ length: rows }, () => Array(cols).fill(null));
+      // preload images
+      function loadImages(callback) {
+        for (let src of imageSources) {
+          const img = new Image();
+          img.src = src;
+          img.onload = () => {
+            imagesLoaded++;
+            if (imagesLoaded === imageSources.length) callback();
+          };
+          images.push(img);
+        }
+      }
+
+      // draw grid and store images in gridData
+      function drawGrid() {
+        // for (let row = 0; row < rows; row++) {
+        //   for (let col = 0; col < cols; col++) {
+        //     if (Math.random() < 0.3) {
+        //       const img = images[Math.floor(Math.random() * images.length)];
+        //       gridData[row][col] = img;
+        //       ctx.drawImage(img, col * cellSize, row * cellSize, cellSize, cellSize);
+        //     } else {
+        //       gridData[row][col] = null;
+        //     }
+        //   }
+        // }
+        drawGridLines();
+        redraw();
+      }
+
+      // draw grid lines
+      function drawGridLines() {
+        ctx.strokeStyle = '#222';
+        ctx.lineWidth = 1;
+        for (let x = 0; x <= cols; x++) {
+          const xpos = x * cellSize + 0.5;
+          ctx.beginPath();
+          ctx.moveTo(xpos, 0);
+          ctx.lineTo(xpos, canvas.height);
+          ctx.stroke();
+        }
+        for (let y = 0; y <= rows; y++) {
+          const ypos = y * cellSize + 0.5;
+          ctx.beginPath();
+          ctx.moveTo(0, ypos);
+          ctx.lineTo(canvas.width, ypos);
+          ctx.stroke();
+        }
+      }
+
+      // redraw everything including hover border
+      function redraw() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        for (let row = 0; row < rows; row++) {
+          for (let col = 0; col < cols; col++) {
+            const img = gridData[row][col];
+            if (img) {
+              ctx.drawImage(img, col * cellSize, row * cellSize, cellSize, cellSize);
+            }
+          }
+        }
+
+        drawGridLines();
+
+        // draw hover border
+        if (hoverTile) {
+          const { row, col } = hoverTile;
+          if (isDragging) {
+            var img = images[Math.floor(Math.random() * images.length)];
+            gridData[row][col] = img;
+          }
+
+          ctx.save();
+          ctx.strokeStyle = '#bbb';
+          ctx.lineWidth = 3;
+          ctx.strokeRect(col * cellSize + 1.5, row * cellSize + 1.5, cellSize - 3, cellSize - 3);
+          ctx.restore();
+        }
+      }
+
+      // click logging
+      function getTileAtClick(event) {
+        const rect = canvas.getBoundingClientRect();
+        const x = event.clientX - rect.left + offsetX;
+        const y = event.clientY - rect.top + offsetY;
+
+        const col = Math.floor(x / cellSize);
+        const row = Math.floor(y / cellSize);
+
+        // assign new image to gridData
+        // const img = images[Math.floor(Math.random() * images.length)];
+        // gridData[row][col] = img;
+
+        // redraw everything
+        // redraw();
+
+        ctx.fillStyle = "#fff"
+        ctx.fillRect(col * cellSize + 1.5, row * cellSize + 1.5, cellSize - 3, cellSize - 3)
+
+        console.log(`Tile: row ${row}, col ${col}`);
+        // window.wof['add-new'](JSON.stringify(gridData))
+      }
+
+      canvas.addEventListener('click', getTileAtClick);
+
+      // mouse move: hover detection and drag
+      canvas.addEventListener('mousemove', (e) => {
+        const rect = canvas.getBoundingClientRect();
+        const x = e.clientX - rect.left + offsetX;
+        const y = e.clientY - rect.top + offsetY;
+        const col = Math.floor(x / cellSize);
+        const row = Math.floor(y / cellSize);
+
+        if (col >= 0 && col < cols && row >= 0 && row < rows) {
+          hoverTile = { row, col };
+        } else {
+          hoverTile = null;
+        }
+
+      });
+      redraw();
+
+      // drag start/end
+      canvas.addEventListener('mousedown', (e) => {
+        isDragging = true;
+        lastX = e.clientX;
+        lastY = e.clientY;
+      });
+      canvas.addEventListener('mouseup', () => { isDragging = false; });
+
+      // initialize
+      loadImages(drawGrid);
+    }
+
+    ['img-board']() {
+      // const divider = document.querySelector('.divider');
+      const left = document.querySelector('.left');
+      const main = document.querySelector('.main');
+
+      let isDragging = false;
+
+      // divider.addEventListener('mousedown', e => {
+      //   isDragging = true;
+      //   document.body.style.cursor = 'col-resize';
+      //   e.preventDefault();
+      // });
+
+      window.addEventListener('mouseup', () => {
+        isDragging = false;
+        document.body.style.cursor = '';
+      });
+
+      window.addEventListener('mousemove', e => {
+        if (!isDragging) return;
+        const mainRect = main.getBoundingClientRect();
+        const newWidth = e.clientX - mainRect.left;
+        const minWidth = 318;
+        const maxWidth = mainRect.width - 320; // keep some space for right panel
+
+        if (newWidth > minWidth && newWidth < maxWidth) {
+          left.style.flex = `0 0 ${newWidth}px`;
+        }
+      });
+
+      (function () {
+        const canvas = document.getElementById('canvas');
+        // const fileInput = document.getElementById('fileInput');
+        // const addFileBtn = document.getElementById('addFileBtn');
+        // const fitBtn = document.getElementById('fitBtn');
+        let zCounter = 1;
+
+        // Utility: keep items within canvas boundary 
+        function clampToCanvas(item) {
+          const canvasRect = canvas.getBoundingClientRect();
+          const itemRect = item.getBoundingClientRect();
+
+          let left = parseFloat(item.style.left);
+          let top = parseFloat(item.style.top);
+          let width = itemRect.width;
+          let height = itemRect.height;
+
+          // Clamp position
+          if (left < 0) left = 0;
+          if (top < 0) top = 0;
+          if (left + width > canvasRect.width) left = canvasRect.width - width;
+          if (top + height > canvasRect.height) top = canvasRect.height - height;
+
+          item.style.left = left + 'px';
+          item.style.top = top + 'px';
+        }
+        // Utility: convert https:// or http urls to base64 strings
+        function urlContentToDataUri(url) {
+          return fetch(url)
+            .then(response => response.blob())
+            .then(blob => new Promise((callback) => {
+              const reader = new FileReader();
+              reader.onload = function () {
+                callback(this.result);
+              };
+              reader.readAsDataURL(blob);
+            }));
+        }
+
+        // Utility: create an image item on canvas
+        function addImageElement(blobOrUrl, x = 50, y = 50) {
+          const item = document.createElement('div');
+          item.className = 'image-item';
+          item.style.left = x + 'px';
+          item.style.top = y + 'px';
+          item.style.width = '240px';
+          item.style.height = '160px';
+          item.style.zIndex = ++zCounter;
+
+          const img = document.createElement('img');
+          img.draggable = false;
+          if (blobOrUrl instanceof Blob) {
+            img.src = URL.createObjectURL(blobOrUrl);
+            item._objectURL = img.src;
+            img._file = blobOrUrl
+            console.log('blubber')
+          } else {
+            console.log('blub')
+            img.src = blobOrUrl;
+            // item._objectURL = img.src;
+            // img._file = blobOrUrl
+          }
+
+          item.appendChild(img);
+
+          // add 4 resize handles
+          ['nw', 'ne', 'sw', 'se'].forEach(pos => {
+            const h = document.createElement('div');
+            h.className = 'handle ' + pos;
+            item.appendChild(h);
+          });
+
+          canvas.appendChild(item);
+
+          // --- drag move ---
+          let startX = 0, startY = 0, origX = 0, origY = 0, dragging = false;
+          item.addEventListener('pointerdown', e => {
+            if (e.target.classList.contains('handle')) return; // skip if on handle
+            e.preventDefault();
+            item.setPointerCapture(e.pointerId);
+            dragging = true;
+            startX = e.clientX; startY = e.clientY;
+            origX = parseFloat(item.style.left); origY = parseFloat(item.style.top);
+            item.style.zIndex = ++zCounter;
+            item.style.cursor = 'grabbing';
+          });
+          item.addEventListener('pointermove', e => {
+            if (!dragging) return;
+            const dx = e.clientX - startX, dy = e.clientY - startY;
+            item.style.left = (origX + dx) + 'px';
+            item.style.top = (origY + dy) + 'px';
+            clampToCanvas(item);
+          });
+          item.addEventListener('pointerup', e => {
+            dragging = false; item.style.cursor = 'grab';
+            try { item.releasePointerCapture(e.pointerId); } catch { }
+          });
+
+          // --- resize via handles ---
+          const handles = item.querySelectorAll('.handle');
+          handles.forEach(h => {
+            let startW, startH, startL, startT, sx, sy;
+            h.addEventListener('pointerdown', e => {
+              e.stopPropagation(); e.preventDefault();
+              item.setPointerCapture(e.pointerId);
+              sx = e.clientX; sy = e.clientY;
+              startW = item.offsetWidth; startH = item.offsetHeight;
+              startL = parseFloat(item.style.left); startT = parseFloat(item.style.top);
+              const pos = [...h.classList].find(c => ['nw', 'ne', 'sw', 'se'].includes(c));
+              function move(ev) {
+                let dx = ev.clientX - sx, dy = ev.clientY - sy;
+                if (pos === 'se') { item.style.width = (startW + dx) + 'px'; item.style.height = (startH + dy) + 'px'; }
+                if (pos === 'sw') { item.style.width = (startW - dx) + 'px'; item.style.height = (startH + dy) + 'px'; item.style.left = (startL + dx) + 'px'; }
+                if (pos === 'ne') { item.style.width = (startW + dx) + 'px'; item.style.height = (startH - dy) + 'px'; item.style.top = (startT + dy) + 'px'; }
+                if (pos === 'nw') { item.style.width = (startW - dx) + 'px'; item.style.height = (startH - dy) + 'px'; item.style.left = (startL + dx) + 'px'; item.style.top = (startT + dy) + 'px'; }
+                // <-- clamp after resize
+                clampToCanvas(item);
+
+              }
+              function up(ev) {
+                item.removeEventListener('pointermove', move);
+                item.removeEventListener('pointerup', up);
+              }
+              item.addEventListener('pointermove', move);
+              item.addEventListener('pointerup', up);
+            });
+          });
+
+          // double-click to remove
+          item.addEventListener('dblclick', () => {
+            if (item._objectURL) URL.revokeObjectURL(item._objectURL);
+            item.remove();
+          });
+
+          return item;
+        }
+
+        window.addEventListener('paste', async (e) => {
+          const items = e.clipboardData && e.clipboardData.items;
+          if (!items) return;
+
+          const rect = canvas.getBoundingClientRect();
+          const centerX = window.scrollX + rect.left + rect.width / 2 - canvas.offsetLeft;
+          const centerY = window.scrollY + rect.top + rect.height / 2 - canvas.offsetTop;
+          var base64data = ''
+          for (let i = 0; i < items.length; i++) {
+            const it = items[i];
+
+            if (it.type.indexOf('image') === 0) {
+              // console.log(it)
+              // const blob = it.getAsFile();
+
+
+              var imageFile = it.getAsFile();
+
+              // Use the FileReader API to convert the Blob to a Data URL (Base64)
+              var fileReader = new FileReader();
+
+              fileReader.onloadend = function () {
+                // The result attribute contains the Base64 data URL
+                base64data = fileReader.result;
+
+                // Log or display the Base64 string
+                console.log(base64data);
+                // resultDiv.textContent = 'Base64 data acquired (check console for full string). Length: ' + base64data.length;
+
+                // You can then use this data, for example, to display the image
+                // var img = new Image();
+                // img.src = base64data;
+                // document.body.appendChild(img);
+
+                addImageElement(
+                  base64data,
+                  Math.max(20, 0),
+                  Math.max(20, 0)
+                  // Math.max(20, centerX - 120),
+                  // Math.max(20, centerY - 80)
+                );
+              };
+
+              // Read the file as a Data URL
+              fileReader.readAsDataURL(imageFile);
+
+            } else if (it.type === 'text/plain') {
+              const text = e.clipboardData.getData('text/plain').trim();
+              if (text && (text.startsWith('http') || text.startsWith('data:'))) {
+
+                const base64DataUri = await urlContentToDataUri(text);
+                console.log('Base64 Data URI:', base64DataUri);
+
+                addImageElement(
+                  // text,
+                  base64DataUri,
+                  Math.max(20, centerX - 120),
+                  Math.max(20, centerY - 80)
+                );
+              }
+            }
+          }
+        });
+
+
+        // Drag & drop files onto canvas
+        // ['dragenter', 'dragover'].forEach(ev => {
+        //   canvas.addEventListener(ev, e => { e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; });
+        // });
+        // canvas.addEventListener('drop', e => {
+        //   e.preventDefault();
+        //   const items = e.dataTransfer.files;
+        //   if (!items || items.length === 0) return;
+        //   const rect = canvas.getBoundingClientRect();
+        //   // position relative to canvas
+        //   const x = e.clientX - rect.left + canvas.scrollLeft;
+        //   const y = e.clientY - rect.top + canvas.scrollTop;
+        //   for (let i = 0; i < items.length; i++) {
+        //     const f = items[i];
+        //     if (f.type.startsWith('image/')) {
+        //       addImageElement(f, x, y + i * 20);
+        //     }
+        //   }
+        // });
+
+        // // File picker
+        // addFileBtn.addEventListener('click', () => fileInput.click());
+        // fileInput.addEventListener('change', e => {
+        //   const files = Array.from(e.target.files || []);
+        //   let startX = 60, startY = 60;
+        //   files.forEach((f, idx) => {
+        //     if (f.type.startsWith('image/')) {
+        //       addImageElement(f, startX + idx * 20, startY + idx * 20);
+        //     }
+        //   });
+        //   fileInput.value = '';
+        // });
+
+
+        // simple helpful hint: if user pastes an image URL as plain text, add it
+        // Also listen to drop of plain text URLs
+        // canvas.addEventListener('drop', e => {
+        //   // already handled files above; check for text
+        //   if (e.dataTransfer.types.includes('text/plain')) {
+        //     const text = e.dataTransfer.getData('text/plain').trim();
+        //     if (text && (text.startsWith('http') || text.startsWith('data:'))) {
+        //       const rect = canvas.getBoundingClientRect();
+        //       const x = e.clientX - rect.left + canvas.scrollLeft;
+        //       const y = e.clientY - rect.top + canvas.scrollTop;
+        //       addImageElement(text, x, y);
+        //     }
+        //   }
+        // });
+
+        // keyboard: Delete key removes focused image (if any). Focus logic: clicked item stores as lastActive
+        let lastActive = null;
+        canvas.addEventListener('click', (e) => {
+          // if click on an image item, lastActive is set in pointerdown already by z-index logic — find nearest parent
+          const item = e.target.closest('.image-item');
+          if (item) {
+            lastActive = item;
+            // visual hint: quick flash
+            item.style.outline = '2px solid rgba(11,92,255,0.18)';
+            setTimeout(() => item.style.outline = '', 220);
+          } else {
+            lastActive = null;
+          }
+        });
+
+        // const addTextBtn = document.getElementById('addTextBtn');
+        // addTextBtn.addEventListener('click', () => {
+        //   addTextElement();
+        // });
+
+      })();
+
+    }
+
+    async ['run'](route) {
+      const file = route.split(' ')[1]
+      const html = await window.wof['request-file'](file)
+      window.open("data:text/html," + encodeURIComponent(html), "popup", "width=600,height=400");
+    }
+
+    ['paste-item']() {
+      let isDragging = false;
+
+      (function () {
+        const canvas = document.getElementById('canvas');
+        let zCounter = 1;
+
+        // Utility: keep items within canvas boundary 
+        function clampToCanvas(item) {
+          const canvasRect = canvas.getBoundingClientRect();
+          const itemRect = item.getBoundingClientRect();
+
+          let left = parseFloat(item.style.left);
+          let top = parseFloat(item.style.top);
+          let width = itemRect.width;
+          let height = itemRect.height;
+
+          // Clamp position
+          if (left < 0) left = 0;
+          if (top < 0) top = 0;
+          if (left + width > canvasRect.width) left = canvasRect.width - width;
+          if (top + height > canvasRect.height) top = canvasRect.height - height;
+
+          item.style.left = left + 'px';
+          item.style.top = top + 'px';
+        }
+
+        // Utility: create an image item on canvas
+        function addImageElement(x = 50, y = 50) {
+          const item = document.createElement('div');
+          item.className = 'image-item';
+          item.innerHTML = `
+            <div id="grd">
+            <canvas id="grid"></canvas>
+            </div>
+          `
+          item.classList.add('grd')
+          item.style.left = x + 'px';
+          item.style.top = y + 'px';
+          item.style.width = '240px';
+          item.style.height = '160px';
+          item.style.zIndex = ++zCounter;
+
+          // add 4 resize handles
+          ['nw', 'ne', 'sw', 'se'].forEach(pos => {
+            const h = document.createElement('div');
+            h.className = 'handle ' + pos;
+            item.appendChild(h);
+          });
+
+          canvas.appendChild(item);
+
+          // --- drag move ---
+          let startX = 0, startY = 0, origX = 0, origY = 0, dragging = false;
+          item.addEventListener('pointerdown', e => {
+            e.preventDefault();
+            if (e.target.classList.contains('handle') || e.shiftKey) return; // skip if on handle
+            item.setPointerCapture(e.pointerId);
+            dragging = true;
+            startX = e.clientX; startY = e.clientY;
+            origX = parseFloat(item.style.left); origY = parseFloat(item.style.top);
+            item.style.zIndex = ++zCounter;
+            item.style.cursor = 'grabbing';
+          });
+          item.addEventListener('pointermove', e => {
+            if (!dragging) return;
+            const dx = e.clientX - startX, dy = e.clientY - startY;
+            item.style.left = (origX + dx) + 'px';
+            item.style.top = (origY + dy) + 'px';
+            clampToCanvas(item);
+          });
+          item.addEventListener('pointerup', e => {
+            dragging = false; item.style.cursor = 'grab';
+            try { item.releasePointerCapture(e.pointerId); } catch { }
+          });
+
+          // --- resize via handles ---
+          const handles = item.querySelectorAll('.handle');
+          handles.forEach(h => {
+            let startW, startH, startL, startT, sx, sy;
+            h.addEventListener('pointerdown', e => {
+              e.stopPropagation(); e.preventDefault();
+              item.setPointerCapture(e.pointerId);
+              sx = e.clientX; sy = e.clientY;
+              startW = item.offsetWidth; startH = item.offsetHeight;
+              startL = parseFloat(item.style.left); startT = parseFloat(item.style.top);
+              const pos = [...h.classList].find(c => ['nw', 'ne', 'sw', 'se'].includes(c));
+              function move(ev) {
+                let dx = ev.clientX - sx, dy = ev.clientY - sy;
+                if (pos === 'se') { item.style.width = (startW + dx) + 'px'; item.style.height = (startH + dy) + 'px'; }
+                if (pos === 'sw') { item.style.width = (startW - dx) + 'px'; item.style.height = (startH + dy) + 'px'; item.style.left = (startL + dx) + 'px'; }
+                if (pos === 'ne') { item.style.width = (startW + dx) + 'px'; item.style.height = (startH - dy) + 'px'; item.style.top = (startT + dy) + 'px'; }
+                if (pos === 'nw') { item.style.width = (startW - dx) + 'px'; item.style.height = (startH - dy) + 'px'; item.style.left = (startL + dx) + 'px'; item.style.top = (startT + dy) + 'px'; }
+                // <-- clamp after resize
+                clampToCanvas(item);
+
+              }
+              function up(ev) {
+                item.removeEventListener('pointermove', move);
+                item.removeEventListener('pointerup', up);
+              }
+              item.addEventListener('pointermove', move);
+              item.addEventListener('pointerup', up);
+            });
+          });
+
+          return item;
+        }
+
+        addImageElement()
+        window.wof['display-ne-canvas-w-img']();
+        // Drag & drop files onto canvas
+        ['dragenter', 'dragover'].forEach(ev => {
+          canvas.addEventListener(ev, e => { e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; });
+        });
+
+
+      })();
+
+    }
+
+
+    ['#md']() {
+      let isDragging = false;
+
+      (function () {
+        const canvas = document.getElementById('canvas');
+        let zCounter = 1;
+
+        // Utility: keep items within canvas boundary 
+        function clampToCanvas(item) {
+          const canvasRect = canvas.getBoundingClientRect();
+          const itemRect = item.getBoundingClientRect();
+
+          let left = parseFloat(item.style.left);
+          let top = parseFloat(item.style.top);
+          let width = itemRect.width;
+          let height = itemRect.height;
+
+          // Clamp position
+          if (left < 0) left = 0;
+          if (top < 0) top = 0;
+          if (left + width > canvasRect.width) left = canvasRect.width - width;
+          if (top + height > canvasRect.height) top = canvasRect.height - height;
+
+          item.style.left = left + 'px';
+          item.style.top = top + 'px';
+        }
+
+        // Utility: create an image item on canvas
+        function addImageElement(x = 50, y = 50) {
+          const item = document.createElement('div');
+          item.className = 'image-item';
+          item.innerHTML = `
+<style>
+#snarky-puppy-app { border: 1px solid #1d8bdc; background: linear-gradient(45deg, #3403b1, #152f63, #0c2862) !important; height: 100%; font-family: sans-serif; display: flex; flex-direction: column; }
+#snarky-puppy-toolbar { padding: 4px 8px; background: #eee; border-bottom: 1px solid #ccc; display: flex; gap: 6px; align-items: center; }
+#snarky-puppy-toolbar button { font-size: 12px; padding: 2px 8px; cursor: pointer; }
+#snarky-puppy-toolbar span { font-size: 12px; color: #666; margin-left: auto; }
+#snarky-puppy-panes { display: flex; flex: 1; overflow: hidden; }
+#snarky-puppy-editor { color: #fff;  flex: 1; overflow-y: auto; padding: 12px; font-family: monospace; font-size: 14px; resize: none; border-top: none; border-left: none; border-bottom: none; outline: none; }
+#snarky-puppy-preview { color: #000; flex: 1; overflow-y: auto; padding: 12px; font-size: 14px; line-height: 1.6; }
+#snarky-puppy-preview h1, #snarky-puppy-preview h2, #snarky-puppy-preview h3 { margin: .5em 0 .25em; }
+#snarky-puppy-preview p { margin: .4em 0; }
+#snarky-puppy-preview pre { background: #f4f4f4; padding: 8px; overflow-x: auto; }
+#snarky-puppy-preview code { background: #f4f4f4; padding: 1px 4px; font-size: 13px; }
+#snarky-puppy-preview pre > code { background: none; padding: 0; }
+#snarky-puppy-preview blockquote { border-left: 3px solid #ccc; padding-left: 10px; color: #555; }
+#snarky-puppy-preview ul, #snarky-puppy-preview ol { padding-left: 20px; margin: .4em 0; }
+#snarky-puppy-preview table { border-collapse: collapse; }
+#snarky-puppy-preview td, #snarky-puppy-preview th { border: 1px solid #ccc; padding: 4px 8px; }
+#snarky-puppy-preview a { color: #06c; }
+#snarky-puppy-preview hr { border: none; border-top: 1px solid #ccc; margin: 1em 0; }
+</style>
+</head>
+<div id="snarky-puppy-app">
+
+<div id="snarky-puppy-panes">
+  <div id="snarky-puppy-editor" contenteditable="true" spellcheck="false">The story goes... </div>
+</div>
+</div>
+          `
+
+          //           <div id="snarky-puppy-toolbar">
+
+          //   <input type="file" id="snarky-puppy-file-input" accept=".md,.txt" style="display:none" onchange="readFile(event)">
+          //   <span id="snarky-puppy-wc">0 words</span>
+          // </div>
+
+          // <button onclick="wrap('**','**')"><b>B</b></button>
+          // <button onclick="wrap('*','*')"><i>I</i></button>
+          // <button onclick="wrap(\`\`,\`\`)">code</button>
+          // <button onclick="insertLine('# ')">H1</button>
+          // <button onclick="insertLine('## ')">H2</button>
+          // <button onclick="insertLine('- ')">list</button>
+          // <button onclick="insertLine('> ')">quote</button>
+          // <button onclick="insertLink()">link</button>
+          // <button onclick="saveFile()">save</button>
+          // <button onclick="loadFile()">open</button>
+
+          item.classList.add('grd')
+          item.style.left = x + 'px';
+          item.style.top = y + 'px';
+          item.style.width = '740px';
+          item.style.height = '460px';
+          item.style.zIndex = ++zCounter;
+
+          // add 4 resize handles
+          ['nw', 'ne', 'sw', 'se'].forEach(pos => {
+            const h = document.createElement('div');
+            h.className = 'handle ' + pos;
+            item.appendChild(h);
+          });
+
+          canvas.appendChild(item);
+
+          // --- drag move ---
+          let startX = 0, startY = 0, origX = 0, origY = 0, dragging = false;
+
+          // --- drag bar ---
+          const dragBar = document.createElement('div');
+          dragBar.className = 'drag-bar';
+          item.appendChild(dragBar);
+
+          dragBar.addEventListener('pointerdown', e => {
+            e.preventDefault();
+            dragBar.setPointerCapture(e.pointerId);
+            dragging = true;
+            startX = e.clientX; startY = e.clientY;
+            origX = parseFloat(item.style.left); origY = parseFloat(item.style.top);
+            item.style.zIndex = ++zCounter;
+            dragBar.style.cursor = 'grabbing';
+          });
+          dragBar.addEventListener('pointermove', e => {
+            if (!dragging) return;
+            const dx = e.clientX - startX, dy = e.clientY - startY;
+            item.style.left = (origX + dx) + 'px';
+            item.style.top = (origY + dy) + 'px';
+            clampToCanvas(item);
+          });
+          dragBar.addEventListener('pointerup', e => {
+            dragging = false;
+            dragBar.style.cursor = 'grab';
+            try { dragBar.releasePointerCapture(e.pointerId); } catch { }
+          });
+          // --- resize via handles ---
+          const handles = item.querySelectorAll('.handle');
+          handles.forEach(h => {
+            let startW, startH, startL, startT, sx, sy;
+            h.addEventListener('pointerdown', e => {
+              e.stopPropagation(); e.preventDefault();
+              item.setPointerCapture(e.pointerId);
+              sx = e.clientX; sy = e.clientY;
+              startW = item.offsetWidth; startH = item.offsetHeight;
+              startL = parseFloat(item.style.left); startT = parseFloat(item.style.top);
+              const pos = [...h.classList].find(c => ['nw', 'ne', 'sw', 'se'].includes(c));
+              function move(ev) {
+                let dx = ev.clientX - sx, dy = ev.clientY - sy;
+                if (pos === 'se') { item.style.width = (startW + dx) + 'px'; item.style.height = (startH + dy) + 'px'; }
+                if (pos === 'sw') { item.style.width = (startW - dx) + 'px'; item.style.height = (startH + dy) + 'px'; item.style.left = (startL + dx) + 'px'; }
+                if (pos === 'ne') { item.style.width = (startW + dx) + 'px'; item.style.height = (startH - dy) + 'px'; item.style.top = (startT + dy) + 'px'; }
+                if (pos === 'nw') { item.style.width = (startW - dx) + 'px'; item.style.height = (startH - dy) + 'px'; item.style.left = (startL + dx) + 'px'; item.style.top = (startT + dy) + 'px'; }
+                // <-- clamp after resize
+                clampToCanvas(item);
+
+              }
+              function up(ev) {
+                item.removeEventListener('pointermove', move);
+                item.removeEventListener('pointerup', up);
+              }
+              item.addEventListener('pointermove', move);
+              item.addEventListener('pointerup', up);
+            });
+          });
+
+          return item;
+        }
+
+        addImageElement()
+        // window.wof['display-ne-canvas-w-img']();
+        // Drag & drop files onto canvas
+        // ['dragenter', 'dragover'].forEach(ev => {
+        //   canvas.addEventListener(ev, e => { e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; });
+        // });
+
+
+      })();
+
+    }
+
+
+
+    ['lite-block']() {
+      let isDragging = false;
+
+      (function () {
+        const canvas = document.getElementById('canvas');
+        let zCounter = 1;
+
+        // Utility: keep items within canvas boundary 
+        function clampToCanvas(item) {
+          const canvasRect = canvas.getBoundingClientRect();
+          const itemRect = item.getBoundingClientRect();
+
+          let left = parseFloat(item.style.left);
+          let top = parseFloat(item.style.top);
+          let width = itemRect.width;
+          let height = itemRect.height;
+
+          // Clamp position
+          if (left < 0) left = 0;
+          if (top < 0) top = 0;
+          if (left + width > canvasRect.width) left = canvasRect.width - width;
+          if (top + height > canvasRect.height) top = canvasRect.height - height;
+
+          item.style.left = left + 'px';
+          item.style.top = top + 'px';
+        }
+
+        // Utility: create an image item on canvas
+        function addImageElement(x = 50, y = 50) {
+          const item = document.createElement('div');
+          item.className = 'image-item';
+          item.innerHTML = String.raw`
+<style>
+#text-lite-wrap{background: #222; display:flex;font-family:var(--font-mono);font-size:14px;line-height:22px;border:1px solid var(--color-border-primary);overflow:hidden}
+#text-lite-nums{padding:4px 8px;background:var(--color-background-secondary);color:var(--color-text-tertiary);text-align:right;user-select:none;min-width:36px;border-right:1px solid var(--color-border-tertiary);overflow:hidden;box-sizing:border-box}
+#text-lite-nums span{display:block;height:22px;}
+#text-lite-editor{background: #222; flex:1;padding:4px 8px;border:none;outline:none;resize:none;overflow-y:scroll;overflow-x:auto;color:var(--color-text-primary);background:var(--color-background-primary);font-family:var(--font-mono);font-size:14px;line-height:22px;white-space:pre;box-sizing:border-box;tab-size:2}
+</style>
+<div id="text-lite-wrap">
+  <div id="text-lite-nums"></div>
+  <textarea id="text-lite-editor" spellcheck="false"></textarea>
+</div>
+`;
+          item.classList.add('grd')
+          item.style.left = x + 'px';
+          item.style.top = y + 'px';
+          item.style.width = '740px';
+          item.style.height = '460px';
+          item.style.zIndex = ++zCounter;
+
+          // add 4 resize handles
+          ['nw', 'ne', 'sw', 'se'].forEach(pos => {
+            const h = document.createElement('div');
+            h.className = 'handle ' + pos;
+            item.appendChild(h);
+          });
+
+          canvas.appendChild(item);
+
+          // --- drag move ---
+          let startX = 0, startY = 0, origX = 0, origY = 0, dragging = false;
+
+          // --- drag bar ---
+          const dragBar = document.createElement('div');
+          dragBar.className = 'drag-bar';
+          item.appendChild(dragBar);
+
+          dragBar.addEventListener('pointerdown', e => {
+            e.preventDefault();
+            dragBar.setPointerCapture(e.pointerId);
+            dragging = true;
+            startX = e.clientX; startY = e.clientY;
+            origX = parseFloat(item.style.left); origY = parseFloat(item.style.top);
+            item.style.zIndex = ++zCounter;
+            dragBar.style.cursor = 'grabbing';
+          });
+          dragBar.addEventListener('pointermove', e => {
+            if (!dragging) return;
+            const dx = e.clientX - startX, dy = e.clientY - startY;
+            item.style.left = (origX + dx) + 'px';
+            item.style.top = (origY + dy) + 'px';
+            clampToCanvas(item);
+          });
+          dragBar.addEventListener('pointerup', e => {
+            dragging = false;
+            dragBar.style.cursor = 'grab';
+            try { dragBar.releasePointerCapture(e.pointerId); } catch { }
+          });
+          // --- resize via handles ---
+          const handles = item.querySelectorAll('.handle');
+          handles.forEach(h => {
+            let startW, startH, startL, startT, sx, sy;
+            h.addEventListener('pointerdown', e => {
+              e.stopPropagation(); e.preventDefault();
+              item.setPointerCapture(e.pointerId);
+              sx = e.clientX; sy = e.clientY;
+              startW = item.offsetWidth; startH = item.offsetHeight;
+              startL = parseFloat(item.style.left); startT = parseFloat(item.style.top);
+              const pos = [...h.classList].find(c => ['nw', 'ne', 'sw', 'se'].includes(c));
+              function move(ev) {
+                let dx = ev.clientX - sx, dy = ev.clientY - sy;
+                if (pos === 'se') { item.style.width = (startW + dx) + 'px'; item.style.height = (startH + dy) + 'px'; }
+                if (pos === 'sw') { item.style.width = (startW - dx) + 'px'; item.style.height = (startH + dy) + 'px'; item.style.left = (startL + dx) + 'px'; }
+                if (pos === 'ne') { item.style.width = (startW + dx) + 'px'; item.style.height = (startH - dy) + 'px'; item.style.top = (startT + dy) + 'px'; }
+                if (pos === 'nw') { item.style.width = (startW - dx) + 'px'; item.style.height = (startH - dy) + 'px'; item.style.left = (startL + dx) + 'px'; item.style.top = (startT + dy) + 'px'; }
+                // <-- clamp after resize
+                clampToCanvas(item);
+
+              }
+              function up(ev) {
+                item.removeEventListener('pointermove', move);
+                item.removeEventListener('pointerup', up);
+              }
+              item.addEventListener('pointermove', move);
+              item.addEventListener('pointerup', up);
+            });
+          });
+
+          return item;
+        }
+
+        addImageElement()
+        // window.wof['display-ne-canvas-w-img']();
+        // Drag & drop files onto canvas
+        // ['dragenter', 'dragover'].forEach(ev => {
+        //   canvas.addEventListener(ev, e => { e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; });
+        // });
+
+
+      })();
+
+    }
+
+    async ['lite']() {
+      await window.wof['lite-block']();
+      const ed = document.getElementById('text-lite-editor');
+      const nums = document.getElementById('text-lite-nums');
+      const sample = `function greet(name) {\n  return "Hello, " + name;\n}\n\nconsole.log(greet("world"));`;
+      ed.value = sample;
+
+      function updateNums() {
+        const n = ed.value.split('\n').length;
+        nums.innerHTML = Array.from({ length: n }, (_, i) => `<span>${i + 1}</span>`).join('');
+        nums.scrollTop = ed.scrollTop;
+      }
+
+      ed.addEventListener('scroll', () => { nums.scrollTop = ed.scrollTop; });
+      ed.addEventListener('input', updateNums);
+      updateNums();
+    }
+
+    async ['.md']() {
+
+      await window.wof['#md']();
+      const editor = document.getElementById('snarky-puppy-editor');
+      const preview = document.getElementById('snarky-puppy-preview');
+      const wc = document.getElementById('snarky-puppy-wc');
+
+      function md(s) {
+        return s
+          .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+          .replace(/^#{6} (.+)$/gm, '<h6>$1</h6>')
+          .replace(/^#{5} (.+)$/gm, '<h5>$1</h5>')
+          .replace(/^#{4} (.+)$/gm, '<h4>$1</h4>')
+          .replace(/^### (.+)$/gm, '<h3>$1</h3>')
+          .replace(/^## (.+)$/gm, '<h2>$1</h2>')
+          .replace(/^# (.+)$/gm, '<h1>$1</h1>')
+          .replace(/^\> (.+)$/gm, '<blockquote>$1</blockquote>')
+          .replace(/^---+$/gm, '<hr>')
+          .replace(/```([\s\S]*?)```/g, '<pre><code>$1</code></pre>')
+          .replace(/`([^`]+)`/g, '<code>$1</code>')
+          .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+          .replace(/\*([^*]+)\*/g, '<em>$1</em>')
+          .replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img alt="$1" src="$2" style="max-width:100%">')
+          .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>')
+          .replace(/^(\d+)\. (.+)$/gm, '<li data-ol>$2</li>')
+          .replace(/^[-*] (.+)$/gm, '<li>$1</li>')
+          .replace(/(<li data-ol>[\s\S]*?<\/li>)/g, '<ol>$1</ol>')
+          .replace(/(<li>[\s\S]*?<\/li>)/g, '<ul>$1</ul>')
+          .replace(/\|(.+)\|/g, row => '<tr>' + row.split('|').filter((_, i, a) => i > 0 && i < a.length - 1).map(c => '<td>' + c.trim() + '</td>').join('') + '</tr>')
+          .replace(/(<tr>[\s\S]+<\/tr>)/g, '<table>$1</table>')
+          .replace(/^(?!<[h|b|u|o|p|t|c|i])(.*\S.*)$/gm, '<p>$1</p>')
+          .replace(/\n{2,}/g, '');
+      }
+
+      function render() {
+        preview.innerHTML = md(editor.value);
+        const words = editor.value.trim() ? editor.value.trim().split(/\s+/).length : 0;
+        // wc.textContent = words + ' word' + (words !== 1 ? 's' : '');
+      }
+
+      function wrap(before, after) {
+        const s = editor.selectionStart, e = editor.selectionEnd;
+        const sel = editor.value.slice(s, e) || 'text';
+        editor.value = editor.value.slice(0, s) + before + sel + after + editor.value.slice(e);
+        editor.focus();
+        editor.setSelectionRange(s + before.length, s + before.length + sel.length);
+        render();
+      }
+
+      function insertLine(prefix) {
+        const s = editor.selectionStart;
+        const lineStart = editor.value.lastIndexOf('\n', s - 1) + 1;
+        editor.value = editor.value.slice(0, lineStart) + prefix + editor.value.slice(lineStart);
+        editor.focus();
+        render();
+      }
+
+      function insertLink() {
+        const url = prompt('URL:', 'https://');
+        if (url) wrap('[', '](' + url + ')');
+      }
+
+      function saveFile() {
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(new Blob([editor.value], { type: 'text/markdown' }));
+        a.download = 'document.md';
+        a.click();
+      }
+
+      function loadFile() { document.getElementById('snarky-puppy-file-input').click(); }
+
+      function readFile(e) {
+        const reader = new FileReader();
+        reader.onload = ev => { editor.value = ev.target.result; render(); };
+        reader.readAsText(e.target.files[0]);
+      }
+
+      editor.addEventListener('input', render);
+      editor.addEventListener('keydown', e => {
+        if (e.key === 'Tab') {
+          e.preventDefault();
+          const s = editor.selectionStart;
+          editor.value = editor.value.slice(0, s) + '  ' + editor.value.slice(s);
+          editor.selectionStart = editor.selectionEnd = s + 2;
+        }
+      });
+
+      editor.value = `# Welcome\n\nStart writing **markdown** here.\n\n- Live preview on the right\n- Use the toolbar or type directly\n- Click **save** to download as .md\n`;
+      render();
+    }
+
+    async ['add-img-listeners']() {
+      // --- image items ---
+      const items = Array.from(document.querySelectorAll('.image-item'))
+
+      items.forEach(item => {
+
+        // --- drag move ---
+        let startX = 0, startY = 0, origX = 0, origY = 0, dragging = false;
+        item.addEventListener('pointerdown', e => {
+          if (e.target.classList.contains('handle')) return; // skip if on handle
+          e.preventDefault();
+          item.setPointerCapture(e.pointerId);
+          dragging = true;
+          startX = e.clientX; startY = e.clientY;
+          origX = parseFloat(item.style.left); origY = parseFloat(item.style.top);
+          item.style.zIndex = ++zCounter;
+          item.style.cursor = 'grabbing';
+        });
+        item.addEventListener('pointermove', e => {
+          if (!dragging) return;
+          const dx = e.clientX - startX, dy = e.clientY - startY;
+          item.style.left = (origX + dx) + 'px';
+          item.style.top = (origY + dy) + 'px';
+          // clampToCanvas(item);
+        });
+        item.addEventListener('pointerup', e => {
+          dragging = false; item.style.cursor = 'grab';
+          try { item.releasePointerCapture(e.pointerId); } catch { }
+        });
+
+        // --- resize via handles ---
+        const handles = item.querySelectorAll('.handle');
+        handles.forEach(h => {
+          let startW, startH, startL, startT, sx, sy;
+          h.addEventListener('pointerdown', e => {
+            e.stopPropagation(); e.preventDefault();
+            item.setPointerCapture(e.pointerId);
+            sx = e.clientX; sy = e.clientY;
+            startW = item.offsetWidth; startH = item.offsetHeight;
+            startL = parseFloat(item.style.left); startT = parseFloat(item.style.top);
+            const pos = [...h.classList].find(c => ['nw', 'ne', 'sw', 'se'].includes(c));
+            function move(ev) {
+              let dx = ev.clientX - sx, dy = ev.clientY - sy;
+              if (pos === 'se') { item.style.width = (startW + dx) + 'px'; item.style.height = (startH + dy) + 'px'; }
+              if (pos === 'sw') { item.style.width = (startW - dx) + 'px'; item.style.height = (startH + dy) + 'px'; item.style.left = (startL + dx) + 'px'; }
+              if (pos === 'ne') { item.style.width = (startW + dx) + 'px'; item.style.height = (startH - dy) + 'px'; item.style.top = (startT + dy) + 'px'; }
+              if (pos === 'nw') { item.style.width = (startW - dx) + 'px'; item.style.height = (startH - dy) + 'px'; item.style.left = (startL + dx) + 'px'; item.style.top = (startT + dy) + 'px'; }
+              // <-- clamp after resize
+              // clampToCanvas(item);
+
+            }
+            function up(ev) {
+              item.removeEventListener('pointermove', move);
+              item.removeEventListener('pointerup', up);
+            }
+            item.addEventListener('pointermove', move);
+            item.addEventListener('pointerup', up);
+          });
+        });
+
+        // double-click to remove
+        item.addEventListener('dblclick', () => {
+          if (item._objectURL) URL.revokeObjectURL(item._objectURL);
+          item.remove();
+        });
+      })
+    }
+
+    async ['request-file'](route) {
+
+      var b = await fetch('/request', {
+        method: 'POST', // Specify the method
+        headers: {
+          'Content-Type': 'application/json', // Indicate the content type
+        },
+        body: JSON.stringify({ "key1": route.split(' ')[1] })
+      })
+
+      const html = await b.text()
+      return html;
+    }
+
+    async ['start-page'](route) {
+      var b = await fetch('https://raw.githubusercontent.com/pagodingo/dArchive/refs/heads/main/start.html')
+      document.getElementById('canvas').innerHTML = await b.text()
+      window.wof['add-img-listeners']();
+    }
+
+    async ['open'](route) {
+      var b = await fetch(`https://raw.githubusercontent.com/pagodingo/darchive/refs/heads/main/${route.split(' ')[1]}.html`)
+      document.getElementById('canvas').innerHTML = await b.text()
+      window.wof['add-img-listeners']();
+    }
+
+    async ['save'](route) {
+      var b = await fetch('/write', {
+        method: 'POST', // Specify the method
+        headers: {
+          'Content-Type': 'application/json', // Indicate the content type
+        },
+        body: JSON.stringify({ // Send the data in the body, stringified as JSON
+          key1: document.getElementById('canvas').innerHTML,
+          key2: route.split(' ')[1]
+        })
+      })
+
+      await b.json()
+    }
+
+    ['chip']() {
+      const editor = document.querySelector('.app');
+
+      // ── ID generator ──────────────────────────────────────────────────────────────
+      let chipCounter = 0;
+      function makeId() {
+        chipCounter++;
+        return 'chip-' + String(chipCounter).padStart(4, '0') + '-' + Math.random().toString(36).slice(2, 6);
+      }
+
+      // ── Create a locked chip from text + id ───────────────────────────────────────
+      function makeChip(text, id) {
+        const span = document.createElement('span');
+        span.className = 'link-chip';
+        span.contentEditable = 'false';
+        span.dataset.chipId = id;
+        span.title = 'ID: ' + id;
+        span.textContent = text;
+        // Show ID badge on click
+        span.addEventListener('click', () => {
+          confirm('<button>hello</button>Chip clicked — text: "' + text + '"  id: ' + id);
+        });
+        return span;
+      }
+
+      // ── Ctrl+V on selected text → wrap as chip ────────────────────────────────────
+      editor.addEventListener('keydown', e => {
+        // Only intercept Ctrl+V (or Cmd+V) when there is a non-collapsed selection
+        if ((e.ctrlKey || e.metaKey) && e.key === 'v') {
+          const sel = window.getSelection();
+          if (!sel || !sel.rangeCount) return;
+          const range = sel.getRangeAt(0);
+          if (range.collapsed) return; // nothing selected — let normal paste happen
+
+          // Make sure selection is inside the editor
+          if (!editor.contains(range.commonAncestorContainer)) return;
+
+          e.preventDefault();
+
+          const selectedText = range.toString().trim();
+          if (!selectedText) return;
+
+          const id = makeId();
+          const chip = makeChip(selectedText, id);
+
+          // Replace the selected content with the chip
+          range.deleteContents();
+          range.insertNode(chip);
+
+          // Insert a zero-width space after so caret can sit beside chip
+          const spacer = document.createTextNode('\u200b');
+          range.setStartAfter(chip);
+          range.insertNode(spacer);
+          range.setStartAfter(spacer);
+          range.collapse(true);
+          sel.removeAllRanges();
+          sel.addRange(range);
+
+          // Log to info bar
+          const box = document.getElementById('chip-info');
+          box.textContent = 'Created chip — text: "' + selectedText + '"  id: ' + id;
+          return;
+        }
+
+        // ── Block accidental deletion of chips ──────────────────────────────────────
+        if (e.key !== 'Backspace' && e.key !== 'Delete') return;
+
+        const sel = window.getSelection();
+        if (!sel || !sel.rangeCount) return;
+        const range = sel.getRangeAt(0);
+
+        if (!range.collapsed) {
+          const frag = range.cloneContents();
+          if (frag.querySelector('.link-chip')) {
+            e.preventDefault();
+            // Delete only text nodes in the selection; leave chips intact
+            const walker = document.createTreeWalker(range.commonAncestorContainer, NodeFilter.SHOW_ALL);
+            const toBlank = [];
+            let node = walker.nextNode();
+            while (node) {
+              if (range.intersectsNode(node) && node.nodeType === Node.TEXT_NODE
+                && !node.parentNode?.classList?.contains('link-chip')) {
+                toBlank.push(node);
+              }
+              node = walker.nextNode();
+            }
+            toBlank.forEach(n => n.textContent = '');
+            range.collapse(true);
+          }
+          return;
+        }
+
+        // Collapsed — guard adjacent chips
+        const { startContainer, startOffset } = range;
+        if (e.key === 'Backspace' && !(startOffset > 0 && startContainer.nodeType === Node.TEXT_NODE)) {
+          const ref = startContainer.nodeType === Node.TEXT_NODE
+            ? startContainer : startContainer.childNodes[startOffset - 1];
+          const prev = ref?.previousSibling ?? ref?.parentNode?.previousSibling;
+          if (prev?.classList?.contains('link-chip')) { e.preventDefault(); return; }
+        }
+        if (e.key === 'Delete' && !(startContainer.nodeType === Node.TEXT_NODE && startOffset < startContainer.length)) {
+          const ref = startContainer.nodeType === Node.TEXT_NODE
+            ? startContainer : startContainer.childNodes[startOffset];
+          const next = ref?.nextSibling ?? ref?.parentNode?.nextSibling;
+          if (next?.classList?.contains('link-chip')) { e.preventDefault(); return; }
+        }
+      });
+    }
+
+
+    ['add-text-item']() {
+      var canvas = document.querySelector('#canvas')
+      var text = "..."
+      var x = 80, y = 80;
+      const item = document.createElement('div');
+      item.className = 'text-item';
+      item.contentEditable = "true";
+      item.innerText = text;
+      item.style.left = x + 'px';
+      item.style.top = y + 'px';
+      item.style.width = '200px';
+      item.style.height = '80px';
+      item.style.zIndex = 2;
+
+      canvas.appendChild(item);
+
+      // dragging
+      let startX = 0, startY = 0, origX = 0, origY = 0, dragging = false;
+      item.addEventListener('pointerdown', e => {
+        if (e.shiftKey) {
+          // Force focus so caret shows consistently
+          item.focus();
+          return;
+        }
+
+        e.preventDefault(); // now it's safe to block default only for dragging
+        item.setPointerCapture(e.pointerId);
+        dragging = true;
+        startX = e.clientX;
+        startY = e.clientY;
+        origX = parseFloat(item.style.left);
+        origY = parseFloat(item.style.top);
+        item.style.zIndex = 2
+        item.style.cursor = 'grabbing';
+      });
+      item.addEventListener('pointermove', e => {
+        if (!dragging) return;
+        const dx = e.clientX - startX;
+        const dy = e.clientY - startY;
+        item.style.left = (origX + dx) + 'px';
+        item.style.top = (origY + dy) + 'px';
+      });
+      item.addEventListener('pointerup', e => {
+        dragging = false;
+        try { item.releasePointerCapture(e.pointerId); } catch (_) { }
+        item.style.cursor = 'grab';
+      });
+
+      // delete with double-click (only when not editing text)
+      item.addEventListener('dblclick', e => {
+        if (e.metaKey) {
+          item.remove();
+        }
+      });
+
+      // resize with ctrl+wheel
+      item.addEventListener('wheel', e => {
+        if (!e.ctrlKey) return;
+        e.preventDefault();
+        const rect = item.getBoundingClientRect();
+        const w = rect.width, h = rect.height;
+        const delta = e.deltaY < 0 ? 1.08 : 0.92;
+        item.style.width = Math.max(60, Math.round(w * delta)) + 'px';
+        item.style.height = Math.max(30, Math.round(h * delta)) + 'px';
+      });
+
+      // return item;
+    }
+
+    ['add-object']() {
+      var object = document.createElement('div')
+      object.innerHTML = window.wof['object-html']();
+      document.querySelector('.app').appendChild(object)
+      window.wof['']
+    }
+
+
+    ['object-html']() {
+      return `
+<div class="summary">
+  <details class="summary__details">
+    <summary class="summary__summary" aria-details="definition-id">
+      position: [x,y], name = 'deep-crystal'
+    </summary>
+  </details>
+
+  <div role="definition" id="definition-id" class="summary__definition">
+    <div contenteditable="true" class="fiction">
+
+
+
+  <div class="summary">
+  <details class="summary__details">
+    <summary class="summary__summary" aria-details="definition-id">
+      int: data;
+    </summary>
+  </details>
+
+  </div>
+
+  <div role="definition" id="definition-id" class="summary__definition">
+    <div contenteditable="true" class="fiction">
+        woah
+      </div>
+      </div>
+lorem ipsum
+      </div>
+  </div>
+</div>`
+    }
+
+    ['show']() {
+      document.getElementById('fileSearchBar').style.display = 'initial'
+      document.getElementById('fileSearchBarInput').style.display = 'initial'
+      document.getElementById('terminal').style.display = 'initial'
+      document.getElementById('fileSearchBarInput').focus();
+    }
+
+    ['mount']() {
+      // activates main search bar
+      window.addEventListener(
+        'keydown',
+        e => {
+          window.draftSaved = false;
+          if (e.shiftKey && e.key === 'Tab') {
+            e.preventDefault()
+            if (document.activeElement.id == 'fileSearchBarInput') {
+              window.wof['blur']()
+            } else {
+              window.wof['show']();
+            }
+          }
+        })
+      // on start
+      window.wof['blur']();
+      // window.wof['set-field']();
+    }
+
+    // The File Search Bar Function
+    ['main'](e) {
+      // ignore up/down arrows
+      if ([38, 40].includes(e.keyCode)) return
+      // ignore enter/go-to route
+      if (e.key === 'Enter') {
+        window.wof.prev = e.target.value
+        window.wof['route'](e.target.value);
+        return
+      }
+
+      // Removes the list if it's visible
+      if (!document.getElementById('fileSearchBarInput').value) {
+        if (document.querySelector('#list')) {
+          document.querySelector('#list').remove()
+        }
+      }
+
+      if (document.getElementById('list')) {
+        document.getElementById('list').remove()
+
+        // Create Results List
+        let p = document.createElement('div')
+        p.className = 'results'
+        p.id = 'list'
+
+        // Populate List
+        for (var i = 0; i < window.wof.actions().length; ++i) {
+          if (window.wof.actions()[i].toLowerCase().includes(document.getElementById('fileSearchBarInput').value.toLowerCase())) {
+            p.innerHTML += `<div class="autocomplete-item" ${onclick}>${window.wof.actions()[i]}</div>`
+          }
+        }
+
+        // Action Handler: Enables Arrow Key Movement
+        window.wof['action-handler'](window.wof.self())
+        document.getElementById('fileSearchBar').appendChild(p)
+
+        // Grab List Elements?
+        let arr = document.getElementsByClassName('autocomplete-item')
+
+        // Make ations clickable
+        for (var j = 0; j < arr.length; ++j) {
+          arr[j].addEventListener('mousedown', (e) => {
+            e.preventDefault()
+            window.wof.route(e.target.innerText)
+            return;
+          })
+        }
+        // If there's no list
+      } else {
+        let p = document.createElement('div')
+        p.className = 'results'
+        p.id = 'list'
+        document.getElementById('fileSearchBar').appendChild(p)
+      }
+    }
+
+    ['action-handler'](action) {
+      let i = -1,
+        results = document.getElementsByClassName("autocomplete-item");
+
+      function deselectAction() {
+        let action = document.getElementsByClassName('result-selected')[0] || results[0]
+        action.classList.remove("result-selected");
+      }
+
+      function selectAction(action) {
+        if (action === results[results.length]) {
+          deselectAction(); i = 0;
+          return results[i].classList.add('result-selected');
+        }
+
+        let active = document.getElementsByClassName('result-selected');
+        if (active) deselectAction();
+
+        document.getElementById('fileSearchBarInput').value = action.innerText
+        action.classList.add("result-selected")
+      }
+
+      action.addEventListener(
+        "keydown", (e) => {
+
+          if (![38, 40, 13].includes(e.keyCode)) return;
+
+          if (results.length === 0) return;
+
+          if (results.length === 1) {
+            action.value = results[0].innerText
+            selectAction(results[0])
+            return;
+          }
+
+          if (e.keyCode === 40) {
+            ++i; return selectAction(results[i]);
+          }
+
+          if (e.keyCode === 38 && i === 0) { i = results.length - 1; return selectAction(results[i]) }
+
+          if (e.keyCode === 38) {
+            --i; return selectAction(results[i]);
+          }
+
+          if (e.keyCode === 13) {
+
+            if (!action.value) return;
+
+            if (i === -1) {
+              if (results.length === 0 || action.value !== results[0].innerText) return;
+              if (results.length === 1) return action.value = results[0].innerText;
+            }
+
+            if (results[i]) {
+              action.value = results[i].innerText
+            }
+
+            deselectAction();
+            return i = -1;
+          }
+        });
+
+    }
+
+    ['actions']() {
+      return Object.getOwnPropertyNames(Object.getPrototypeOf(window.wof))
+    }
+
+    ['self']() {
+      return document.getElementById('fileSearchBarInput')
+    }
+
+    ['blur']() {
+      if (document.querySelector('#list')) {
+        document.querySelector('#list').remove()
+      }
+      // clear last search
+      document.getElementById('fileSearchBarInput').value = ''
+      // if search active
+      if (document.getElementById('terminal-text').innerText != '') return;
+      document.getElementById('fileSearchBarInput').style.display = 'none'
+      document.getElementById('fileSearchBar').style.display = 'none'
+      document.getElementById('terminal').style.display = 'none'
+
+    }
+
+    // ['autoBlur']() {
+    //     window.wof.self().addEventListener(
+    //     'blur', () => {
+    //       if (document.querySelector('#list')) {
+    //         document.querySelector('#list').remove()
+    //       }
+
+    //       document.getElementById('fileSearchBarInput').value = ''
+    //       document.getElementById('fileSearchBarInput').style.display = 'none'
+    //       document.getElementById('fileSearchBar').style.display = 'none'
+    //       document.getElementById('terminal').style.display = 'none'
+    //     })
+    // }
+
+    async ['route'](r) {
+      if (window.wof[r]) {
+        window.wof[r](r)
+        window.wof['blur']()
+        return;
+      }
+
+      if (window.wof[r.split(' ')[0]]) {
+        window.wof[r.split(' ')[0]](r)
+        window.wof['blur']()
+        return;
+      }
+
+      // route exists as one entity (example: "load")
+      if (window.wof[r.toLowerCase()]) {
+        window.wof[r.toLowerCase()](r)
+        window.wof['blur']()
+        return;
+      }
+      // route does not exist because it is two parts (example: "open <file>")
+      if (window.wof[r.toLowerCase().split(' ')[0]]) {
+        window.wof[r.toLowerCase().split(' ')[0]](r);
+        window.wof['blur']()
+        return;
+      }
+    }
+
+  }
+
+  render()
+</script>
+<!-- pretty json -->
+<script defer src="https://unpkg.com/pretty-json-custom-element/index.js"></script>
+<!-- json-viewer -->
+<script src="https://unpkg.com/@alenaksu/json-viewer@latest/dist/json-viewer.bundle.js"></script>
+<!-- jsnviewr -->
+<script src="https://cdn.jsdelivr.net/npm/jsnview@3.0.0/dist/index.min.js"></script>
+
+</html>
