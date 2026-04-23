@@ -399,7 +399,7 @@ a { color: #999eee; }
       var location = window.location.search;
       if (location === '') return;
       location = location.split('?press=')[1];
-      window.wof['local'](`local ${location}`);
+      window.wof['source'](`source ${location}`);
     }
 
     ['s-cache']() {
@@ -808,7 +808,7 @@ function block(sel){exec('formatBlock',sel.value);sel.value='p';}
       window.wof['add-img-listeners']();
     }
 
-    async ['open'](route) {
+    async ['source'](route) {
       const b = await fetch(`https://raw.githubusercontent.com/pagodingo/darchive/refs/heads/main/${route.split(' ')[1]}.html`);
       document.getElementById('wof-alpha-canvas').innerHTML = await b.text();
       window.wof['add-img-listeners']();
