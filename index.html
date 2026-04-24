@@ -8,10 +8,6 @@
 </head>
 <body>
 <style>
-
-  body {
-    color: #000;
-  }
 .embed-html-input { width: 100%; }
 .drag-bar {
   position: absolute; bottom: 0; left: 50%; transform: translateX(-50%);
@@ -53,11 +49,11 @@
   min-width: 100px; min-height: 40px; padding: 6px 8px;
   background: #000; border: 1px dashed rgba(0,0,0,0.2); border-radius: 4px;
   cursor: grab; font-size: 16px; line-height: 1.4; white-space: pre-wrap;
-  overflow: auto; resize: both;
+  overflow: auto; resize: both; color: #fff;
 }
 .text-item:focus { outline: 2px solid #333; }
 html, body {
-  margin: 0; height: 100%; overflow: hidden;
+  margin: 0; height: 100%; color: #fffff6; overflow: hidden;
   font-size: 12px; font-family: 'monospace';
 }
 .container { position: absolute; display: flex; flex-direction: column; height: 100%; width: 100%; bottom: 0; }
@@ -399,7 +395,7 @@ a { color: #999eee; }
       var location = window.location.search;
       if (location === '') return;
       location = location.split('?press=')[1];
-      window.wof['source'](`source ${location}`);
+      window.wof['local'](`local ${location}`);
     }
 
     ['s-cache']() {
@@ -805,13 +801,13 @@ function block(sel){exec('formatBlock',sel.value);sel.value='p';}
     async ['start-page']() {
       const b = await fetch('https://raw.githubusercontent.com/pagodingo/dArchive/refs/heads/main/start.html');
       document.getElementById('wof-alpha-canvas').innerHTML = await b.text();
-      window.wof['add-img-listeners']();
+      // window.wof['add-img-listeners']();
     }
 
-    async ['source'](route) {
+    async ['open'](route) {
       const b = await fetch(`https://raw.githubusercontent.com/pagodingo/darchive/refs/heads/main/${route.split(' ')[1]}.html`);
       document.getElementById('wof-alpha-canvas').innerHTML = await b.text();
-      window.wof['add-img-listeners']();
+      // window.wof['add-img-listeners']();
     }
 
     async ['local'](route) {
@@ -820,7 +816,7 @@ function block(sel){exec('formatBlock',sel.value);sel.value='p';}
         body: JSON.stringify({key1: route.split(' ')[1]})
       });
       document.getElementById('wof-alpha-canvas').innerHTML = await b.text();
-      window.wof['add-img-listeners']();
+      // window.wof['add-img-listeners']();
     }
 
     async ['save'](route) {
