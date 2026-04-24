@@ -395,7 +395,7 @@ a { color: #999eee; }
       var location = window.location.search;
       if (location === '') return;
       location = location.split('?press=')[1];
-      window.wof['local'](`local ${location}`);
+      window.wof['ext-src'](`ext-src ${location}`);
     }
 
     ['s-cache']() {
@@ -804,13 +804,13 @@ function block(sel){exec('formatBlock',sel.value);sel.value='p';}
       // window.wof['add-img-listeners']();
     }
 
-    async ['open'](route) {
+    async ['ext-src'](route) {
       const b = await fetch(`https://raw.githubusercontent.com/pagodingo/darchive/refs/heads/main/${route.split(' ')[1]}.html`);
       document.getElementById('wof-alpha-canvas').innerHTML = await b.text();
       // window.wof['add-img-listeners']();
     }
 
-    async ['local'](route) {
+    async ['int-src'](route) {
       const b = await fetch('/read', {
         method:'POST', headers:{'Content-Type':'application/json'},
         body: JSON.stringify({key1: route.split(' ')[1]})
