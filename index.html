@@ -391,10 +391,6 @@
       cursor: pointer;
     }
 
-    .mobile input[type=field] {
-      display: none;
-    }
-
     .mobile label {
       background-color: rgb(229, 229, 229);
       border-bottom: 1px dotted #222;
@@ -402,6 +398,20 @@
       font-size: 1em;
       font-family: 'Courier New', Courier, monospace;
       text-transform: capitalize;
+      color: #222;
+      font-weight: bold;
+    }
+
+    .mobile label:hover {
+      background-color: orange;
+    }
+
+    .mobile {
+      width: 100%;
+      gap: 10px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
     }
 
     /* ── Mobile layout: screens narrower than 1200px ─────────────────────────── */
@@ -422,6 +432,8 @@
         overflow-y: visible;
         height: auto;
         flex-direction: column;
+                width: 100vw;
+                
       }
 
       .main {
@@ -429,16 +441,23 @@
         height: auto;
         overflow: visible;
         overflow-x: hidden;
+        width: 100%;
+        
       }
 
       .mobile {
-        display: initial !important;
+        display: flex !important;
+        width: 100vw;
+      }
+
+      .mobile label {
+        text-align: center;
       }
 
       #wof-alpha-canvas {
         position: static !important;
         width: 100% !important;
-        height: auto !important;
+        /* height: auto !important; */
         overflow: visible !important;
         display: flex;
         flex-direction: column;
@@ -449,6 +468,7 @@
         background-image: linear-gradient(to right, #798f9f 1px, transparent 1px),
           linear-gradient(to bottom, #798f9f 1px, transparent 1px);
         background-size: 32px 32px;
+                height: 88vh !important
       }
 
       #wof-alpha-canvas>.image-item,
