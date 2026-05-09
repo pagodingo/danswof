@@ -490,9 +490,17 @@
         <div class="left">
           <div id="wof-alpha-canvas" class="canvas"></div>
           <div class="mobile" style="display:none">
-            <input type="file" accept="image/*" capture="camera" id="photo">
+            <input type="file" accept="image/*" capture="user" id="front-camera">
             <label for="photo">
-              Open Camera
+              Open Front Camera
+            </label>
+            <input type="file" accept="image/*" capture="environment" id="back-camera">
+            <label for="photo">
+              Open Back Camera
+            </label>
+            <input type="file" accept="image/*">
+            <label for="photo">
+              Open Camera Roll
             </label>
           </div>
         </div>
